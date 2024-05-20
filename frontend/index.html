@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Restaurant Orders</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+  </head>
+  <body class="bg-gray-100 font-sans">
+    <div class="container mx-auto px-4 py-8">
+      <h1 class="text-3xl font-semibold mb-4">Restaurant Orders</h1>
+
+      <h2 class="text-xl font-semibold mb-2">Add Order</h2>
+      <form id="addOrderForm" class="mb-8">
+        <div class="mb-4">
+          <label for="orderId" class="block text-sm font-medium text-gray-700">Order ID:</label>
+          <input type="text" id="orderId" name="orderId" required class="mt-1 p-2 rounded-md border border-gray-300 w-full" />
+        </div>
+
+        <div class="mb-4">
+          <label for="itemName" class="block text-sm font-medium text-gray-700">Item Name:</label>
+          <select id="itemName" name="itemName" required class="mt-1 p-2 rounded-md border border-gray-300 w-full">
+            <option value="">Select an item</option>
+            <option value="Nasi Goreng">Nasi Goreng</option>
+            <option value="Ayam Goreng">Ayam Goreng</option>
+            <option value="Mie Goreng">Mie Goreng</option>
+            <option value="Soto Ayam">Soto Ayam</option>
+            <option value="Bakso">Bakso</option>
+            <option value="Nasi Kuning">Nasi Kuning</option>
+            <option value="Sate Ayam">Sate Ayam</option>
+            <option value="Gado-gado">Gado-gado</option>
+            <option value="Pecel Lele">Pecel Lele</option>
+            <option value="Nasi Padang">Nasi Padang</option>
+          </select>
+        </div>
+
+        <div class="mb-4">
+          <label for="quantity" class="block text-sm font-medium text-gray-700">Quantity:</label>
+          <input type="number" id="quantity" name="quantity" required class="mt-1 p-2 rounded-md border border-gray-300 w-full" />
+        </div>
+
+        <div class="mb-4">
+          <label for="price" class="block text-sm font-medium text-gray-700">Price:</label>
+          <input type="number" id="price" name="price" step="0.01" required class="mt-1 p-2 rounded-md border border-gray-300 w-full" />
+        </div>
+
+        <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600">Add Order</button>
+      </form>
+
+      <h2 class="text-xl font-semibold mb-2">All Orders</h2>
+      <div class="overflow-x-auto">
+        <table class="table-auto border-collapse w-full">
+          <thead>
+            <tr>
+              <th class="px-4 py-2">Order ID</th>
+              <th class="px-4 py-2">Item Name</th>
+              <th class="px-4 py-2">Quantity</th>
+              <th class="px-4 py-2">Price</th>
+              <th class="px-4 py-2">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="orderTable" class="text-center"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <script>
+      function editOrder(orderId) {
+        var itemName = prompt("Enter the new item name:");
+        var quantity = parseInt(prompt("Enter the new quantity:"));
+        var price = parseFloat(prompt("Enter the new price:"));
+
+        if (itemName && !isNaN(quantity) && !isNaN(price)) {
+          var orderData = {
+            id: orderId,
+            items: [
+              {
+                id: orderId,
+                name: itemName,
+                quantity: quantity,
+                price: price,
+              },
+            ],
+          };
+
+          fetch("/updateOrder/" + orderId, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(orderData),
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              alert(data.message);
+              location.reload();
+            })
+            .catch((error) => {
+              console.error("Error:", error);
+            });
+        }
+      }
+
+      function deleteOrder(orderId) {
+        if (confirm("Are you sure you want to delete this order?")) {
+          fetch("/deleteOrder/" + orderId, {
+            method: "DELETE",
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              alert(data.message);
+              location.reload();
+            })
+            .catch((error) => {
+              console.error("Error:", error);
+            });
+        }
+      }
+
+      document.getElementById("addOrderForm").addEventListener("submit", function (event) {
+        event.preventDefault();
+        var formData = new FormData(this);
+        var orderData = {
+          id: formData.get("orderId"),
+          items: [
+            {
+              id: formData.get("orderId"),
+              name: formData.get("itemName"),
+              quantity: parseInt(formData.get("quantity")),
+              price: parseFloat(formData.get("price")),
+            },
+          ],
+        };
+
+        fetch("/addOrder", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(orderData),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            alert(data.message);
+            location.reload();
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+          });
+      });
+
+      fetch("/allOrders")
+        .then((response) => response.json())
+        .then((data) => {
+          var orderTable = document.getElementById("orderTable");
+          data.orders.forEach((order) => {
+            var row = document.createElement("tr");
+
+            var orderIdCell = document.createElement("td");
+            orderIdCell.textContent = order.id;
+            row.appendChild(orderIdCell);
+
+            var itemNameCell = document.createElement("td");
+            itemNameCell.textContent = order.items[0].name;
+            row.appendChild(itemNameCell);
+
+            var quantityCell = document.createElement("td");
+            quantityCell.textContent = order.items[0].quantity;
+            row.appendChild(quantityCell);
+
+            var priceCell = document.createElement("td");
+            priceCell.textContent = "$" + order.items[0].price.toFixed(2);
+            row.appendChild(priceCell);
+
+            var actionCell = document.createElement("td");
+            var editButton = document.createElement("button");
+            editButton.textContent = "Edit";
+            editButton.classList.add("bg-blue-500", "text-white", "px-2", "py-1", "rounded-md", "mr-2", "hover:bg-blue-600");
+            editButton.onclick = function () {
+              editOrder(order.id);
+            };
+            actionCell.appendChild(editButton);
+
+            var deleteButton = document.createElement("button");
+            deleteButton.textContent = "Delete";
+            deleteButton.classList.add("bg-red-500", "text-white", "px-2", "py-1", "rounded-md", "hover:bg-red-600");
+            deleteButton.onclick = function () {
+              deleteOrder(order.id);
+            };
+            actionCell.appendChild(deleteButton);
+
+            row.appendChild(actionCell);
+
+            orderTable.appendChild(row);
+          });
+        })
+        .catch((error) => {
+          console.error("Error:", error);
+        });
+    </script>
+  </body>
+</html>

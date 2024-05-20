@@ -13,7 +13,7 @@ CORS(app)
 grpc_channel = grpc.insecure_channel('localhost:50051')
 grpc_stub = menu_pb2_grpc.OrderServiceStub(grpc_channel)
 
-template_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../frontend/src'))
+template_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../frontend'))
 app.template_folder = template_dir
 
 @app.route("/")
